@@ -1,0 +1,46 @@
+version: '3'
+services:
+  nginx:
+    build: ./nginx
+    privileged: true
+    ports:
+      - "80:80"
+    networks:
+      server_net:
+        ipv4_address: 10.0.2.100
+
+  client:
+    build: ./base
+    privileged: true
+    networks:
+      - client_net
+    deploy:
+      replicas: 4
+    command: sh -c "/sbin/ip route replace default via 10.0.1.254 && /home/sleep.sh"
+    tty: true
+    depends_on:
+      - router
+
+  router:
+    build: ./base
+    container_name: router
+    hostname: router
+    privileged: true
+    networks:
+      client_net:
+        ipv4_address: 10.0.1.254
+      server_net:
+        ipv4_address: 10.0.2.254
+
+networks:
+  client_net:
+    ipam:
+      config:
+        - subnet: 10.0.1.0/24
+          gateway: 10.0.1.1
+  server_net:
+    ipam:
+      config:
+        - subnet: 10.0.2.0/24
+          gateway: 10.0.2.1
+
