@@ -1,13 +1,22 @@
 version: '3'
 services:
-  nginx:
+  nginx_lb:
     build: ./nginx
     privileged: true
-    ports:
-      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
-      server_net:
-        ipv4_address: 10.0.2.100
+      - server_net
+
+  nginx:
+    depends_on:
+      - nginx_lb
+    build: ./nginx
+    privileged: true
+    networks:
+      - server_net
+    deploy:
+      replicas: 3
 
   client:
     build: ./base
@@ -16,7 +25,7 @@ services:
       - client_net
     deploy:
       replicas: 4
-    command: sh -c "/sbin/ip route replace default via 10.0.1.254 && /home/sleep.sh"
+    command: sh -c "/sbin/ip route replace default via 10.0.1.254 && apt install -y apache2-utils && ab -k -c 100 -n 100000 10.0.2.2/"
     tty: true
     depends_on:
       - router
