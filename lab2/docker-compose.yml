@@ -1,21 +1,35 @@
 networks:
   net1:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 69.0.1.0/24
+          gateway: 69.0.1.1
   net2:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 69.0.2.0/24
+          gateway: 69.0.2.1
   net3:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 69.0.3.0/24
+          gateway: 69.0.3.1
 
 services:
   router:
     build: ./base
     container_name: ospf-router
     networks:
-      - net1
-      - net2
-      - net3
+      net1:
+        ipv4_address: 69.0.1.254
+      net2:
+        ipv4_address: 69.0.2.254
+      net3:
+        ipv4_address: 69.0.3.254
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
     restart: always
-
