@@ -1,0 +1,21 @@
+networks:
+  net1:
+    driver: bridge
+  net2:
+    driver: bridge
+  net3:
+    driver: bridge
+
+services:
+  router:
+    build: ./base
+    container_name: ospf-router
+    networks:
+      - net1
+      - net2
+      - net3
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    restart: always
+

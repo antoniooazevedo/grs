@@ -10,6 +10,8 @@ RUN mkdir -p /var/log/quagga
 RUN chown quagga:quagga /var/log/quagga
 RUN mkdir /run/quagga
 RUN chmod a+w /run/quagga
-COPY sleep.sh /root/sleep.sh
-COPY start.sh /root/start.sh
-CMD /root/start.sh
+COPY sleep.sh /home/sleep.sh
+COPY start.sh /home/start.sh
+RUN chmod +x /home/start.sh
+RUN chmod +x /home/sleep.sh
+CMD /home/start.sh
