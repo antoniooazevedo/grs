@@ -1,21 +1,39 @@
 networks:
-  net1:
+  external:
     driver: bridge
     ipam:
       config:
-        - subnet: 69.0.1.0/24
+        - subnet: 172.31.255.0/24
           gateway: 69.0.1.1
-  net2:
+  public1:
     driver: bridge
     ipam:
       config:
-        - subnet: 69.0.2.0/24
+        - subnet: 172.16.123.128/28
           gateway: 69.0.2.1
-  net3:
+  public2:
     driver: bridge
     ipam:
       config:
-        - subnet: 69.0.3.0/24
+        - subnet: 172.16.123.144/28
+          gateway: 69.0.3.1
+  internal1:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.1.0/29
+          gateway: 69.0.1.1
+  internal2:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.1.8/29
+          gateway: 69.0.2.1
+  internal3:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.1.16/29
           gateway: 69.0.3.1
 
 services:
