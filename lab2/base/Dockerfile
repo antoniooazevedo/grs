@@ -12,6 +12,10 @@ RUN mkdir /run/quagga
 RUN chmod a+w /run/quagga
 COPY sleep.sh /home/sleep.sh
 COPY start.sh /home/start.sh
+
+COPY config/ospfd.conf /etc/quagga/ospfd.conf
+COPY config/zebra.conf /etc/quagga/zebra.conf
+
 RUN chmod +x /home/start.sh
 RUN chmod +x /home/sleep.sh
 CMD /home/start.sh
