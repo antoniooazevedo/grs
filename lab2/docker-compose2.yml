@@ -1,0 +1,248 @@
+version: '3.8'
+
+networks:
+  public_net:
+    driver: bridge
+    driver_opts:
+      parent: eth2
+    ipam:
+      config:
+        - subnet: 172.31.255.0/24
+          gateway: 172.31.255.254
+  org1_int1_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.1.0/29
+          gateway: 10.0.1.1
+  org1_int2_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.1.8/29
+          gateway: 10.0.1.9
+  org1_int3_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.1.16/29
+          gateway: 10.0.1.17
+  org1_pub1_net:
+    driver: bridge
+    driver_opts:
+      parent: eth2
+    ipam:
+      config:
+        - subnet: 172.16.123.128/28
+          gateway: 172.16.123.129
+  org1_pub2_net:
+    driver: bridge
+    driver_opts:
+      parent: eth2
+    ipam:
+      config:
+        - subnet: 172.16.123.144/28
+          gateway: 172.16.123.145
+  org2_int1_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.2.0/29
+          gateway: 10.0.2.1
+  org2_int2_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.2.8/29
+          gateway: 10.0.2.9
+  org2_int3_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.2.16/29
+          gateway: 10.0.2.17
+  org2_pub1_net:
+    driver: bridge
+    driver_opts:
+      parent: eth2
+    ipam:
+      config:
+        - subnet: 172.16.123.16/28
+          gateway: 172.16.123.17
+  org2_pub2_net:
+    driver: bridge
+    driver_opts:
+      parent: eth2
+    ipam:
+      config:
+        - subnet: 172.16.123.0/28
+          gateway: 172.16.123.1
+
+services:
+  org1_router1:
+    build: ./base
+    container_name: org1_router1
+    hostname: org1_router1
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      org1_int1_net:
+        ipv4_address: 10.0.1.2
+      org1_int2_net:
+        ipv4_address: 10.0.1.10
+      public_net:
+        ipv4_address: 172.31.255.253
+    volumes:
+      - ./bgpd-org1.conf:/etc/quagga/bgpd.conf       
+    command: > 
+                sh -c "/sbin/ip route replace default via 172.31.255.1 && /home/start-ospf-bgp.sh"
+    tty: true
+
+  org1_router2:
+    build: ./base
+    container_name: org1_router2
+    hostname: org1_router2
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      org1_int2_net:
+        ipv4_address: 10.0.1.11
+      org1_int3_net:
+        ipv4_address: 10.0.1.18
+      org1_pub2_net:
+        ipv4_address: 172.16.123.158
+    command: >
+                sh -c "/sbin/ip route del default via 10.0.1.9 && /home/start-ospf.sh"
+    tty: true
+
+  org1_router3:
+    build: ./base
+    container_name: org1_router3
+    hostname: org1_router3
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      org1_int1_net:
+        ipv4_address: 10.0.1.3
+      org1_int3_net:
+        ipv4_address: 10.0.1.19
+      org1_pub1_net:
+        ipv4_address: 172.16.123.142
+    command: >
+                sh -c "/sbin/ip route del default via 10.0.1.1 && /home/start-ospf.sh" 
+    tty: true
+
+  org1_server1:
+    build: ./base
+    container_name: org1_server1
+    hostname: org1_server1
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      org1_pub1_net:
+        ipv4_address: 172.16.123.130
+    command: > 
+                sh -c "/sbin/ip route replace default via 172.16.123.142 && /bin/bash"
+    tty: true
+
+  org1_server2:
+    build: ./base
+    container_name: org1_server2
+    hostname: org1_server2
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      org1_pub2_net:
+        ipv4_address: 172.16.123.146
+    command: > 
+                sh -c "/sbin/ip route replace default via 172.16.123.158 && /bin/bash"
+    tty: true
+
+  org2_router1:
+    build: ./base
+    container_name: org2_router1
+    hostname: org2_router1
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      public_net:
+        ipv4_address: 172.31.255.252      
+      org2_int1_net:
+        ipv4_address: 10.0.2.2
+      org2_int2_net:
+        ipv4_address: 10.0.2.10
+    volumes:
+      - ./bgpd-org2.conf:/etc/quagga/bgpd.conf
+    command: >
+                sh -c "/sbin/ip route replace default via 172.31.255.1 && /home/start-ospf-bgp.sh"
+    tty: true
+
+  org2_router2:
+    build: ./base
+    container_name: org2_router2
+    hostname: org2_router2
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      org2_pub2_net:
+        ipv4_address: 172.16.123.14
+      org2_int2_net:
+        ipv4_address: 10.0.2.11
+      org2_int3_net:
+        ipv4_address: 10.0.2.18
+    command: >
+                sh -c "/sbin/ip route del default via 10.0.2.9 && /home/start-ospf.sh"
+    tty: true
+
+  org2_router3:
+    build: ./base
+    container_name: org2_router3
+    hostname: org2_router3
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      org2_pub1_net:
+        ipv4_address: 172.16.123.30
+      org2_int1_net:
+        ipv4_address: 10.0.2.3
+      org2_int3_net:
+        ipv4_address: 10.0.2.19
+    command: >
+                sh -c "/sbin/ip route del default via 10.0.2.1 && /home/start-ospf.sh"
+    tty: true
+
+  org2_server1:
+    build: ./base
+    container_name: org2_server1
+    hostname: org2_server1
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      org2_pub1_net:
+        ipv4_address: 172.16.123.18
+    command: >
+                sh -c "/sbin/ip route replace default via 172.16.123.30 && /bin/bash"
+    tty: true
+
+  org2_server2:
+    build: ./base
+    container_name: org2_server2
+    hostname: org2_server2
+    privileged: true
+    cap_add:
+      - NET_ADMIN
+    networks:
+      org2_pub2_net:
+        ipv4_address: 172.16.123.2
+    command: >
+                sh -c "/sbin/ip route replace default via 172.16.123.14 && /bin/bash"
+    tty: true
