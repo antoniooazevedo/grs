@@ -1,16 +1,20 @@
 services:
   database-1:
-    image: scylladb/scylla
+    build:
+      context: ./db_files
     container_name: database-1 
     volumes:
       - ./volumes/db1:/var/lib/scylla
-    command: ["--developer-mode=1", "--seeds=127.0.0.1"]
+    command: ["--developer-mode=1"]
     privileged: true
 
+
   database-2:
-    image: scylladb/scylla
+    build:
+      context: ./db_files
     container_name: database-2 
     volumes:
       - ./volumes/db2:/var/lib/scylla
-    command: ["--developer-mode=1", "--seeds=127.0.0.1"]
+    command: ["--developer-mode=1"]
     privileged: true
+
