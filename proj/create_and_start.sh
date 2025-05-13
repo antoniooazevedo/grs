@@ -73,7 +73,7 @@ generate_node() {
     ]
     networks:
       ${NETWORK_NAME}: 
-        ipv4_address: 172.20.0.${IP_SUFFIX}
+        ipv4_address: ${IP_ADDR}.${IP_SUFFIX}
     privileged: true
 
 EOF
@@ -95,7 +95,7 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: ${SUBNET}
+        - subnet: ${IP_ADDR}.0/16
 EOF
 
 # === Launch Cluster ===
