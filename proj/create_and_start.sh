@@ -1,12 +1,33 @@
 #!/bin/bash
 
 # === Configuration ===
-REGION1="us"
-REGION2="eu"
-NODES_PER_REGION=3
-IMAGE="scylladb/scylla:5.2"
-SUBNET="172.20.0.0/16"
-NETWORK_NAME="scylla-net"
+ENV_FILE_PATH=./utils
+
+if [[ ! -f "$ENV_FILE_PATH/scylla.env" ]]; then
+    echo "❌ scylla.env file not found! Exiting..."
+    exit 1
+fi
+
+source "$ENV_FILE_PATH/scylla.env"
+
+# === Verify minimum values ===
+if [[ $NUMBER_OF_REGIONS -lt 1 || $NODES_PER_REGION -lt 1 ]]; then
+    echo "❌ Number of regions or number of nodes per region too low (minimum 1). Exiting..."
+    exit 1
+fi
+
+# === Ensure script is run as root ===
+if [[ "$EUID" -ne 0 ]]; then
+  echo "❌ Please run this script as root or using sudo."
+  exit 1
+fi
+
+# === Adjust aio limit (needed for ScyllaDB) ===
+if [ "$(cat /proc/sys/fs/aio-max-nr)" -lt 1048576 ]; then
+    echo "fs.aio-max-nr too low, increasing..."
+    sysctl -w fs.aio-max-nr=1048576
+    echo "done"
+fi 
 
 # === Setup ===
 mkdir -p db_files volumes
@@ -14,8 +35,6 @@ mkdir -p db_files volumes
 
 # === Docker Compose Header ===
 cat <<EOF >> docker-compose.yml
-version: '3.8'
-
 services:
 EOF
 
@@ -45,7 +64,7 @@ generate_node() {
       - ${RACKDC_FILE}:/etc/scylla/cassandra-rackdc.properties
     command: [
       "--developer-mode", "1",
-      "--seeds", "database-1",
+      "--seeds", "$REGION_PREFIX-1-database-1",
       "--smp", "1",
       "--listen-address", "${NODE_NAME}",
       "--broadcast-address", "${NODE_NAME}",
@@ -53,22 +72,19 @@ generate_node() {
       "--endpoint-snitch", "GossipingPropertyFileSnitch"
     ]
     networks:
-      ${NETWORK_NAME}:
+      ${NETWORK_NAME}: 
         ipv4_address: 172.20.0.${IP_SUFFIX}
     privileged: true
 
 EOF
 }
 
-echo "Generating nodes..."
+echo "Generating docker-compose.yml file..."
 
-for ((i = 1; i <= NODES_PER_REGION; i++)); do
-  generate_node "database-$i" "$REGION1" $((IP_BASE++)) "rack$i"
-done
-
-for ((j = 1; j <= NODES_PER_REGION; j++)); do
-  IDX=$((NODES_PER_REGION + j))
-  generate_node "database-$IDX" "$REGION2" $((IP_BASE++)) "rack$j"
+for ((j = 1; j <= NUMBER_OF_REGIONS; j++)) do
+    for ((i = 1; i <= NODES_PER_REGION; i++)); do
+        generate_node "$REGION_PREFIX-$j-database-$i" "$REGION_PREFIX-$j" $((IP_BASE++)) "rack$i"
+    done
 done
 
 # === Docker Network ===
@@ -86,6 +102,7 @@ EOF
 echo "Bringing up the cluster..."
 docker compose up -d
 
-echo "Done. Nodes launched:"
-docker ps --filter name=database
+echo "Done. Nodes launched!"
+echo "All nodes need around 45 seconds to be fully operational!"
+echo "Please wait around a minute before executing any command on the nodes!"
 

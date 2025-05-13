@@ -6,17 +6,16 @@ if [[ "$EUID" -ne 0 ]]; then
   exit 1
 fi
 
-echo "⚠️  This will remove all containers, volumes, and local data. Continue? (y/N)"
-read -r confirm
+read -p "⚠️  This will remove all containers, volumes, and local data. Continue? (y/N) " confirm
 if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
   echo "❌ Aborted."
   exit 1
 fi
 
-echo "🛑 Stopping and removing containers..."
+echo "Stopping and removing containers..."
 docker compose down -v --remove-orphans
 
-echo "🧹 Removing local data directories..."
+echo "Removing local data directories..."
 rm -rf ./volumes
 rm -rf ./db_files
 rm -f ./docker-compose.yml
