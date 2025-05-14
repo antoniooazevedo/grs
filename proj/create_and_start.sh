@@ -16,6 +16,12 @@ if [[ $NUMBER_OF_REGIONS -lt 1 || $NODES_PER_REGION -lt 1 ]]; then
     exit 1
 fi
 
+if [[ $(($NUMBER_OF_REGIONS * $NODES_PER_REGION)) -gt 10 ]]; then
+    RED=$'\033[1;31m'
+    NC=$'\033[0m'  
+    printf "${RED}WARNING: \nThe amount of total nodes is greater than 10. You are running the risk of depleting the resources of the host machine, and therefore the containers won't work properly, or even startup. Reduce the number of regions or the number of nodes per region in the environment file in order to guarantee correct functionality.\n$NC"
+fi
+
 # === Ensure script is run as root ===
 if [[ "$EUID" -ne 0 ]]; then
   echo "❌ Please run this script as root or using sudo."
