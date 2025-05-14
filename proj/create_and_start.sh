@@ -36,12 +36,32 @@ if [ "$(cat /proc/sys/fs/aio-max-nr)" -lt 1048576 ]; then
 fi 
 
 # === Setup ===
-mkdir -p db_files volumes
+mkdir -p db_files volumes 
 > docker-compose.yml
 
 # === Docker Compose Header ===
 cat <<EOF >> docker-compose.yml
 services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./utils/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      ${NETWORK_NAME}:
+        ipv4_address: ${IP_ADDR}.39
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      ${NETWORK_NAME}:
+        ipv4_address: ${IP_ADDR}.40
+
 EOF
 
 # === Generate Nodes ===
@@ -87,9 +107,17 @@ EOF
 
 echo "Generating docker-compose.yml file..."
 
+PROMETHEUS_STRING=""
+
 for ((j = 1; j <= NUMBER_OF_REGIONS; j++)) do
     for ((i = 1; i <= NODES_PER_REGION; i++)); do
-        generate_node "$REGION_PREFIX-$j-database-$i" "$REGION_PREFIX-$j" $((IP_BASE++)) "rack$i"
+        CONTAINER_NAME="$REGION_PREFIX-$j-database-$i" 
+        generate_node "$CONTAINER_NAME" "$REGION_PREFIX-$j" $((IP_BASE++)) "rack$i"
+        PROMETHEUS_STRING="$PROMETHEUS_STRING'$CONTAINER_NAME:9180'"
+
+        if [[ $NUMBER_OF_REGIONS -ne j || $NODES_PER_REGION -ne i ]]; then
+            PROMETHEUS_STRING="$PROMETHEUS_STRING, "
+        fi
     done
 done
 
@@ -103,6 +131,19 @@ networks:
       config:
         - subnet: ${IP_ADDR}.0/16
 EOF
+
+# === Prometheus Config ===
+echo "Generating prometheus.yml"
+cat <<EOF >> utils/prometheus.yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'scylla'
+    static_configs:
+      - targets: [$PROMETHEUS_STRING]
+EOF
+
 
 # === Launch Cluster ===
 echo "Bringing up the cluster..."

@@ -19,6 +19,7 @@ echo "Removing local data directories..."
 rm -rf ./volumes
 rm -rf ./db_files
 rm -f ./docker-compose.yml
+rm -f ./utils/prometheus.yml
 
 echo "✅ Cleanup complete."
 
