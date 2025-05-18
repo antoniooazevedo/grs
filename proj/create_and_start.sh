@@ -37,6 +37,8 @@ fi
 
 # === Setup ===
 mkdir -p db_files volumes 
+cp -r utils/grafana volumes/
+sudo chown -R 472:472 volumes/grafana
 > docker-compose.yml
 
 # === Docker Compose Header ===
@@ -46,7 +48,7 @@ services:
     image: prom/prometheus
     container_name: prometheus
     volumes:
-      - ./utils/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
     networks:
@@ -58,11 +60,18 @@ services:
     container_name: grafana
     ports:
       - "3000:3000"
+    volumes:
+      - ./volumes/grafana:/var/lib/grafana
     networks:
       ${NETWORK_NAME}:
         ipv4_address: ${IP_ADDR}.40
 
+  client:
+    image: scylladb/cassandra-stress:3.17.0
+
 EOF
+
+# The client service is simply there to download the image to then run the commands
 
 # === Generate Nodes ===
 IP_BASE=2
@@ -134,9 +143,9 @@ EOF
 
 # === Prometheus Config ===
 echo "Generating prometheus.yml"
-cat <<EOF >> utils/prometheus.yml
+cat <<EOF >> prometheus.yml
 global:
-  scrape_interval: 15s
+  scrape_interval: 5s
 
 scrape_configs:
   - job_name: 'scylla'

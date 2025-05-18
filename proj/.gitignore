@@ -1,2 +1,4 @@
-volumes/db1/
-volumes/db2/
+db_files/
+volumes/
+docker-compose.yml
+prometheus.yml

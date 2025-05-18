@@ -16,10 +16,12 @@ echo "Stopping and removing containers..."
 docker compose down -v --remove-orphans
 
 echo "Removing local data directories..."
+cp -r ./volumes/grafana/* ./utils/grafana/
+chown -R 1000:1000 ./utils
 rm -rf ./volumes
 rm -rf ./db_files
 rm -f ./docker-compose.yml
-rm -f ./utils/prometheus.yml
+rm -f ./prometheus.yml
 
 echo "✅ Cleanup complete."
 
