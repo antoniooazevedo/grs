@@ -10,6 +10,23 @@ fi
 
 source "$ENV_FILE_PATH/scylla.env"
 
+# === Override with arguments if provided ===
+if [[ $# -gt 0 ]]; then
+    if [[ $# -ne 2 ]]; then
+        echo "❌ Exactly 2 arguments required if using CLI overrides: <NUMBER_OF_REGIONS> <NODES_PER_REGION>"
+        exit 1
+    fi
+
+    NUMBER_OF_REGIONS=$1
+    NODES_PER_REGION=$2
+
+    # Optional: check if values are integers
+    if ! [[ "$NUMBER_OF_REGIONS" =~ ^[0-9]+$ ]] || ! [[ "$NODES_PER_REGION" =~ ^[0-9]+$ ]]; then
+        echo "❌ Both arguments must be positive integers."
+        exit 1
+    fi
+fi
+
 # === Verify minimum values ===
 if [[ $NUMBER_OF_REGIONS -lt 1 || $NODES_PER_REGION -lt 1 ]]; then
     echo "❌ Number of regions or number of nodes per region too low (minimum 1). Exiting..."
