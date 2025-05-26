@@ -71,7 +71,7 @@ node_menu() {
 
         if ! [[ "$selected" =~ ^[0-9]+$ ]] || (( selected < 1 || selected > ${#containers[@]} )); then
             echo "Invalid selection."
-            return 
+            return
         fi
         IFS=":::" read -r container_name _ <<< "${containers[$((selected-1))]}"
 
@@ -80,14 +80,13 @@ node_menu() {
         echo "Selected container: $container_name"
         printf "%0.s=" {1..60}
         echo
-        echo "1) Start | 2) Stop | 3) Stress | 4) Back" 
-        read -rp "Select an option [1-4]: " choice
+        echo "1) Start | 2) Stop | 3) Back" 
+        read -rp "Select an option [1-3]: " choice
 
         case $choice in
             1) docker start "$container_name" ;;
             2) docker stop "$container_name" ;;
-            3) stress_menu ;;
-            4) return ;;
+            3) continue ;;
             *)
                 echo "Invalid option. Please try again."
             ;;
@@ -95,45 +94,6 @@ node_menu() {
     done
 }
 
-get_container_ip() {
-    local container_name="$1"
-
-    # Extract network names the container is connected to
-    local network=$(docker inspect "$container_name" | jq -r '.[0].NetworkSettings.Networks | to_entries[0].value.IPAddress')
-    echo $network
-}
-
-get_network_by_suffix() {
-    local suffix="$1"
-    docker network ls --format '{{.Name}}' | awk -v s="$suffix" '$0 ~ s"$"'
-}
-
-stress_menu() {
-    printf "%0.s=" {1..60}
-    echo
-    while true; do
-        ip=$(get_container_ip "$container_name")
-        full_network_name=$(get_network_by_suffix "$NETWORK_NAME")
-        echo "Selected container IP on $full_network_name: $ip"
-        echo "1) Read | 2) Write | 3) Read/Write | 4) Counter Write | 5) Back" 
-        read -rp "Select a stress-test to perform [1-6]: " choice
-
-        case $choice in
-            1) docker run --rm --network "$full_network_name" scylladb/cassandra-stress:3.17.0 "cassandra-stress write -node $ip -mode native cql3" ;;
-            2) docker run --rm --network "$full_network_name" scylladb/cassandra-stress:3.17.0 "cassandra-stress read -node $ip -mode native cql3" ;;
-            3) docker run --rm --network "$full_network_name" scylladb/cassandra-stress:3.17.0 "cassandra-stress mixed ratio\(read=50,write=50\) -node $ip -mode native cql3" ;;
-            4) docker run --rm --network "$full_network_name" scylladb/cassandra-stress:3.17.0 "cassandra-stress counter_write -node $ip -mode native cql3" ;;
-            5) return ;;
-            *)
-                echo "Invalid option. Please try again."
-                clear
-                continue
-            ;;
-        esac
-        read -rp "Press Enter to continue..."
-        return
-    done
-}
 
 # ==== Main loop ====
 while true; do

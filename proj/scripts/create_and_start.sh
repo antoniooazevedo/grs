@@ -83,12 +83,7 @@ services:
       ${NETWORK_NAME}:
         ipv4_address: ${IP_ADDR}.40
 
-  client:
-    image: scylladb/cassandra-stress:3.17.0
-
 EOF
-
-# The client service is simply there to download the image to then run the commands
 
 # === Generate Nodes ===
 IP_BASE=2

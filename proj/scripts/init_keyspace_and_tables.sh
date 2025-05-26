@@ -13,4 +13,6 @@ source "$ENV_FILE_PATH/scylla.env"
 # === Run cqlsh in one of the databases ===
 
 docker cp "$ENV_FILE_PATH/init.cql" "$REGION_PREFIX-1-database-1:/tmp/init.cql"
+docker cp "$ENV_FILE_PATH/inserts.cql" "$REGION_PREFIX-1-database-1:/tmp/inserts.cql"
 docker exec -it "$REGION_PREFIX-1-database-1" cqlsh -f "/tmp/init.cql"
+docker exec -it "$REGION_PREFIX-1-database-1" cqlsh -f "/tmp/inserts.cql"
