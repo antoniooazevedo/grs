@@ -20,9 +20,12 @@ source "$ENV_FILE_PATH/scylla.env"
 # ==== Configuration: Define menu options and commands/scripts ====
 show_menu() {
   clear
-  echo "==========================="
-  echo "    Dynamo Testing Suite   "
-  echo "==========================="
+  printf "%0.s=" {1..60}
+  echo
+  printf "%0.s " {1..20}
+  echo -e "Dynamo Testing Suite   "
+  printf "%0.s=" {1..60}
+  echo 
   echo "1) Create and start the containers"
   echo "2) Stop and clean-up the build files"
   echo "3) Initialize the database with keyspaces"
