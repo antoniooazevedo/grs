@@ -1,3 +1,16 @@
+# HOW TO RUN
+In the root of the `proj/` directory, run the script:
+
+```bash
+sudo ./menu.sh
+```
+
+If a demonstration is needed instead, please run the demo script, which will run a sequenced set of actions to demonstrate anti-entropy behaviour.
+
+```bash
+sudo ./demo.sh
+```
+
 # WARNING
 If any `database` containers spit out errors along the lines of 
 ```
